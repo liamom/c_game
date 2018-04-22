@@ -3,7 +3,6 @@ extern crate rand;
 
 use tmx_parser::Map;
 
-use self::rand::{Rng, ChaChaRng};
 mod name_generator;
 use name_generator::*;
 
@@ -26,7 +25,7 @@ fn main() {
 
     println!("running with {}", path);
 
-    let map = Map::new(path.as_ref()).unwrap();
+    let _map = Map::new(path.as_ref()).unwrap();
 
     println!("rec={}", rec(5));
     println!("Hello, world!");
