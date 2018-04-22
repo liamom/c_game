@@ -1,0 +1,9 @@
+[package]
+name = "tmx_parser"
+version = "0.1.0"
+authors = ["Liam Oliver-Mallory <liam.olivermallory@gmail.com>"]
+
+[lib]
+
+[dependencies]
+xml-rs = "0.7.0"

@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "tmx_parser",
+    "game",
+]
