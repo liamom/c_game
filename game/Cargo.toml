@@ -5,3 +5,4 @@ authors = ["Liam Oliver-Mallory <liam.olivermallory@gmail.com>"]
 
 [dependencies]
 tmx_parser = {path = "../tmx_parser"}
+rand = "0.4.2"
