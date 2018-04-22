@@ -1,4 +1,4 @@
-use rand::{Rng, ChaChaRng};
+use rand::{Rng};
 
 const FEMALE_FIRST_NAMES: &'static str = include_str!("dist.female.first");
 const MALE_FIRST_NAMES: &'static str = include_str!("dist.male.first");
@@ -11,14 +11,14 @@ pub struct Name {
 }
 
 impl Name {
-    pub fn male(mut rng :&mut ChaChaRng) -> Self {
+    pub fn male<RNG: Rng>(mut rng :&mut RNG) -> Self {
         Name {
             first_name: get_rand_name(&MALE_FIRST_NAMES, &mut rng),
             last_name:  get_rand_name(&LAST_NAMES, &mut rng),
         }
     }
 
-    pub fn female(mut rng :&mut ChaChaRng) -> Self {
+    pub fn female<RNG: Rng>(mut rng :&mut RNG) -> Self {
         Name {
             first_name: get_rand_name(&FEMALE_FIRST_NAMES, &mut rng),
             last_name:  get_rand_name(&LAST_NAMES, &mut rng),
@@ -26,7 +26,7 @@ impl Name {
     }
 }
 
-fn get_rand_name(names: &'static str, rng :&mut ChaChaRng) -> &'static str {
+fn get_rand_name<RNG: Rng>(names: &'static str, rng :&mut RNG) -> &'static str {
     let name_length = get_name_length();
     let number_of_names: usize = names.len() / name_length;
 
