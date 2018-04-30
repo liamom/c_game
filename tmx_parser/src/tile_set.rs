@@ -3,32 +3,19 @@ use std::string::String;
 use ::types::*;
 use std::default::Default;
 
-extern crate xml;
-use self::xml::reader::{EventReader, XmlEvent};
-use self::xml::name::OwnedName;
-use self::xml::attribute::OwnedAttribute;
-use self::xml::namespace::Namespace;
+use xml::reader::{EventReader, XmlEvent};
+use xml::attribute::OwnedAttribute;
 use std::io::BufReader;
 use std::fs::File;
 
-pub enum Property {
-    Boolean(String, bool),
-    Float(String, f32),
-    Int(String, i32),
-    String(String, String),
-    Colour(String, Color),
-//    File(String, File),
-    Undef
-}
-
-struct Terrain {
-    name: String,
-    tile_id: u32,
-    properties: Vec<Property>,
+pub struct Terrain {
+    pub name: String,
+    pub tile_id: u32,
+    pub properties: Vec<Property>,
 }
 
 impl Terrain {
-    fn new() ->Self{
+    fn new() -> Self{
         Terrain{
             name: String::new(),
             tile_id: u32::max_value(),
@@ -56,20 +43,20 @@ struct Animation {
     frames: Vec<Frame>,
 }
 
-struct ObjectGroup {
+pub struct ObjectGroup {
 
 }
 
-struct Tile {
-    id :u32,
-    terrain_indices: [i32; 4],
-    probability: u32,
-    properties: Vec<Property>,
-    object_group: ObjectGroup,
-    image_path: String,
-    image_size: Vector2u,
-    image_position: Vector2u,
-    tile_type: String,
+pub struct Tile {
+    pub id :u32,
+    pub terrain_indices: [i32; 4],
+    pub probability: u32,
+    pub properties: Vec<Property>,
+    pub object_group: ObjectGroup,
+    pub image_path: String,
+    pub image_size: Vector2u,
+    pub image_position: Vector2u,
+    pub tile_type: String,
 }
 
 impl Tile {
@@ -89,56 +76,26 @@ impl Tile {
 }
 
 pub struct TileSet {
-    working_dir: String,
-    first_gid: u32,
-    source: String,
-    name: String,
-    tile_size: Vector2u,
-    spacing: u32,
-    margin: u32,
-    tile_count: u32,
-    column_count: u32,
-    tile_offset: Vector2u,
-    properties: Vec<Property>,
-    image_path: String,
-    transparency_colour: Color,
-    has_transparency: bool,
-    terrain_types: Vec<Terrain>,
-    tiles: Vec<Tile>,
+    pub working_dir: String,
+    pub first_gid: u32,
+    pub source: String,
+    pub name: String,
+    pub tile_size: Vector2u,
+    pub spacing: u32,
+    pub margin: u32,
+    pub tile_count: u32,
+    pub column_count: u32,
+    pub tile_offset: Vector2u,
+    pub properties: Vec<Property>,
+    pub image_path: String,
+    pub transparency_colour: Color,
+    pub has_transparency: bool,
+    pub terrain_types: Vec<Terrain>,
+    pub tiles: Vec<Tile>,
 }
 
 impl TileSet {
-    pub fn new(attr: &Vec<OwnedAttribute>, parser: &mut EventReader<BufReader<File>>) -> Self{
-
-        loop {
-            let e = parser.next();
-            match e {
-                Ok(XmlEvent::StartElement {ref name, ..}) => {
-                    match &name.local_name as &str {
-                        "image" => {
-
-                        }
-                        _ =>{panic!("unexpected element in tileset")}
-                    }
-                },
-                Ok(XmlEvent::EndElement {ref name}) => {
-                    if name.local_name == "tileset" {break;}
-                },
-                Ok(_) =>{},
-                Err(_) => {},
-            };
-        }
-//        let tile_set = xml.get("tileset");
-//        match xml {
-//
-//
-//        }
-//        xml.
-//        match xml {
-//
-//        }
-
-
+    fn empty() -> Self {
         TileSet{
             working_dir: String::new(),
             first_gid: 0,
@@ -157,5 +114,94 @@ impl TileSet {
             terrain_types: Vec::new(),
             tiles: Vec::new(),
         }
+    }
+
+    pub fn new(attrs: &Vec<OwnedAttribute>, parser: &mut EventReader<BufReader<File>>) -> Self{
+        let mut tile_set = TileSet::empty();
+
+        for attr in attrs {
+            match &attr.name.local_name as &str {
+                "tileset"    => continue,
+                "firstgid"   => { tile_set.first_gid    = attr.value.parse().unwrap(); }
+                "source"     => { tile_set.source       = attr.value.clone(); }
+                "name"       => { tile_set.name         = attr.value.clone(); }
+                "tilewidth"  => { tile_set.tile_size.x  = attr.value.parse().unwrap(); }
+                "tileheight" => { tile_set.tile_size.y  = attr.value.parse().unwrap(); }
+                "tilecount"  => { tile_set.tile_count   = attr.value.parse().unwrap(); }
+                "columns"    => { tile_set.column_count = attr.value.parse().unwrap(); }
+
+                &_ => {}
+            }
+        }
+
+        loop {
+            let e = parser.next();
+            match e {
+                Ok(XmlEvent::StartElement {ref name, ref attributes, ..}) => {
+                    match &name.local_name as &str{
+                        "image" => {
+                            for ref attr in attributes {
+                                match &attr.name.local_name as &str {
+                                    "source" => tile_set.source = attr.value.clone(),
+                                    "width" => tile_set.tile_size.x = attr.value.parse().unwrap(),
+                                    "height" => tile_set.tile_size.y = attr.value.parse().unwrap(),
+                                    &_ => panic!("unknown attribute on image tag"),
+                                }
+                            }
+                        }
+                        "grid" => {
+                            println!("grid not handled"); //todo
+                        }
+                        "tileoffset"   => { panic!("unimplemented behavoir"); } //todo implement
+                        "properties"   => { panic!("unimplemented behavoir"); } //todo implement
+                        "terraintypes" => { panic!("unimplemented behavoir"); } //todo implement
+                        "tile"         => { panic!("unimplemented behavoir"); } //todo implement
+                        s              => { panic!("unknown tile set element \"{}\"", s);}
+                    }
+                },
+                Ok(XmlEvent::EndElement {ref name}) => {
+                    if name.local_name == "tileset" {break;}
+                },
+                Ok(_) =>{},
+                Err(_) => {},
+            };
+        }
+
+        if tile_set.tiles.len() != tile_set.tile_count as usize {
+            for id in 0..tile_set.tile_count {
+                // First, we check if the tile does not yet exist
+                for tile in &tile_set.tiles {
+                    if tile.id == id {
+                        break;
+                    }
+                }
+
+                let row_index   = id % tile_set.column_count;
+                let column_index= id / tile_set.column_count;
+                let ref tile_size = tile_set.tile_size;
+                let image_pos_x = row_index * tile_size.x;
+                let image_pos_y = column_index * tile_size.y;
+
+
+                let tile = Tile {
+                    id: id,
+                    terrain_indices: [0;4],
+                    probability: 0,
+                    properties: Vec::new(),
+                    object_group: ObjectGroup{},
+                    image_path: tile_set.image_path.clone(),
+                    image_size: tile_set.tile_size.clone(),
+                    image_position: Vector2u{ x: image_pos_x, y: image_pos_y },
+                    tile_type: String::new(),
+                };
+
+
+                tile_set.tiles.push(tile);
+
+            }
+        }
+
+
+        return tile_set;
     }
 }

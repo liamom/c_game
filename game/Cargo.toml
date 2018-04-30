@@ -4,5 +4,9 @@ version = "0.1.0"
 authors = ["Liam Oliver-Mallory <liam.olivermallory@gmail.com>"]
 
 [dependencies]
-tmx_parser = {path = "../tmx_parser"}
+#tmx_parser = {path = "../tmx_parser"}
+tiled = "0.7.4"
 rand = "0.4.2"
+piston_window = "0.79.0"
+log = {version = "0.4.1"} #off,error,warn,info,debug,trace
+env_logger = "0.5.9"

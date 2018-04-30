@@ -4,32 +4,28 @@ use std::fs::File;
 use std::io::BufReader;
 use std::str::*;
 
-extern crate xml;
-use self::xml::reader::{EventReader, XmlEvent};
-use self::xml::name::OwnedName;
-use self::xml::attribute::OwnedAttribute;
+use xml::reader::{EventReader, XmlEvent};
+use xml::attribute::OwnedAttribute;
 
 use ::types::*;
 use ::tile_set::TileSet;
+
+use ::tile_layer::*;
 
 pub struct Map {
 //    version: Version,
     orientation: Option<Orientation>,
     render_order: Option<RenderOrder>,
-//
     tile_count: Vector2u,
     tile_size: Vector2u,
-//
     hex_side_length: f32,
     stagger_axis: Option<StaggerAxis>,
     stagger_index: Option<StaggerIndex>,
-//
     background_color: Option<Color>,
-//
-    working_directory: String,
-//
-    tile_sets: Vec<TileSet>,
-//    layers: std::vector<Layer::Ptr>,
+//    working_directory: String,
+
+    pub tile_sets: Vec<TileSet>,
+    pub layers: Vec<TileLayer>,
 //    properties: std::vector<Property>,
 
 }
@@ -94,8 +90,9 @@ impl Map {
             stagger_axis: None,
             stagger_index: None,
             background_color: None,
-            working_directory: String::new(),
+//            working_directory: String::new(),
             tile_sets: Vec::new(),
+            layers: Vec::new(),
         }
     }
 
@@ -107,9 +104,10 @@ impl Map {
 
         let mut map: Map = Map::default();
 
-        while let Ok(ref e) = parser.next() {
+
+        while let Ok(e) = parser.next() {
             match e {
-                &XmlEvent::StartElement {ref name, ref attributes, ref namespace} => {
+                XmlEvent::StartElement {ref name, ref attributes, ref namespace} => {
                     println!("StartElement name={:?}, attr={:?}, namespace=((({:?})))", name, attributes, namespace);
                     let ref name = name.local_name;
                     match &name as &str{
@@ -117,33 +115,37 @@ impl Map {
                             map.process_map(&attributes);
                         }
                         "tileset" => {
-                            map.tile_sets.push(TileSet::new(attributes, &mut parser));
+                            map.tile_sets.push(TileSet::new(&attributes, &mut parser));
                         }
                         "layer" => {
-
+                            let size = map.tile_count.x * map.tile_count.y;
+                            map.layers.push(TileLayer::new(size as usize, &attributes, &mut parser).unwrap());
                         }
                         "objectgroup" => {
-
+                            panic!("no implemented yet"); //todo
                         }
                         "imagelayer" => {
-
+                            panic!("no implemented yet"); //todo
                         }
                         "properties" => {
-
+                            panic!("no implemented yet"); //todo
                         }
                         _ => {}
                     }
                 }
-                &XmlEvent::EndElement {ref name} => {
+                XmlEvent::EndElement {ref name} => {
                     println!("end = {}", name);
                 }
-                &XmlEvent::StartDocument{ref version, ref encoding, ref standalone} => {}
-                &XmlEvent::EndDocument => {}
-                &XmlEvent::ProcessingInstruction{ref name, ref data} => {}
-                &XmlEvent::CData(ref ss) => {}
-                &XmlEvent::Comment(_) => {}
-                &XmlEvent::Characters(_) => {}
-                &XmlEvent::Whitespace(_) => {}
+                XmlEvent::StartDocument{..} => {}
+                XmlEvent::EndDocument => {
+                    println!("end doc");
+                    break;
+                }
+                XmlEvent::ProcessingInstruction{..} => {}
+                XmlEvent::CData(..) => {}
+                XmlEvent::Comment(_) => {}
+                XmlEvent::Characters(_) => {}
+                XmlEvent::Whitespace(_) => {}
             }
         }
 

@@ -135,10 +135,29 @@ impl FromStr for Color {
     }
 }
 
-#[derive(Default)]
-pub struct Vector2u {
-    pub x: i32,
-    pub y: i32,
+pub enum Property {
+    Boolean(String, bool),
+    Float(String, f32),
+    Int(String, i32),
+    String(String, String),
+    Colour(String, Color),
+    //    File(String, File),
+    Undef
+}
+
+
+#[derive(Default, Clone)]
+pub struct Vector2<T> {
+    pub x: T,
+    pub y: T,
+}
+
+pub type Vector2u = Vector2<u32>;
+pub type Vector2i = Vector2<i32>;
+pub type Vector2f = Vector2<f32>;
+
+impl<T> Vector2<T> {
+
 }
 
 #[cfg(test)]
