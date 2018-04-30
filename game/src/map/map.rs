@@ -44,7 +44,7 @@ impl TileSet {
         let (w,h) = (self.tile_set.tile_width, self.tile_set.tile_height);
 
         let image = &self.tile_set.images[0];
-        let col_num = (image.width as u32) / w;
+        let col_num = (image.width as u32) / w - 1;
         let local_id = id - self.tile_set.first_gid;
         let col = local_id % col_num;
         let row = local_id / col_num;
@@ -79,8 +79,8 @@ impl TilesetManager {
         let tile_set = self.get_by_id(id);
 
         let tf = c.transform.trans(
-            x as f64 * tile_set.tile_set.tile_width as f64,
-            y as f64 * tile_set.tile_set.tile_height as f64,
+            x as f64 * tile_set.tile_set.tile_width as f64 / 2.0,
+            y as f64 * tile_set.tile_set.tile_height as f64 / 2.0,
         );
 
         let source_rect = tile_set.get_source_rect(id as u32);
