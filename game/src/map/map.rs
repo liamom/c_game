@@ -11,7 +11,7 @@ use log::*;
 use std::path::PathBuf;
 
 struct TileSet {
-    image: G2dTexture,
+    texture: G2dTexture,
     tile_set: tiled::Tileset,
 }
 
@@ -35,7 +35,7 @@ impl TileSet {
         }
 
         TileSet {
-            image: tex,
+            texture: tex,
             tile_set: ts.clone(),
         }
     }
@@ -78,15 +78,19 @@ impl TilesetManager {
 
         let tile_set = self.get_by_id(id);
 
+//        let tf = c.transform.trans(
+//            x as f64 * tile_set.tile_set.tile_width as f64 / 2.0,
+//            y as f64 * tile_set.tile_set.tile_height as f64 / 2.0,
+//        );
         let tf = c.transform.trans(
-            x as f64 * tile_set.tile_set.tile_width as f64 / 2.0,
-            y as f64 * tile_set.tile_set.tile_height as f64 / 2.0,
+            ((x as i32 - y as i32) * tile_set.tile_set.tile_width  as i32) as f64 / 2.0,
+            ((x as i32 + y as i32) * tile_set.tile_set.tile_height as i32) as f64 / 2.0,
         );
 
         let source_rect = tile_set.get_source_rect(id as u32);
 
         let image = Image::new().src_rect(source_rect).draw(
-            &tile_set.image,
+            &tile_set.texture,
             &DrawState::default(),
             tf,
             g
@@ -156,7 +160,7 @@ impl Drawable for Map {
             for layer in &self.map.layers {
                 for x in 0..layer.tiles.len() {
                     for y in 0..layer.tiles[x].len() {
-                        let tile = layer.tiles[x][y];
+                        let tile = layer.tiles[y][x];
                         self.manager.draw(tile as usize, x, y, c, g);
                     }
                 }
