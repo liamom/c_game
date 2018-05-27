@@ -1,0 +1,21 @@
+[package]
+name = "engine"
+version = "0.1.0"
+authors = ["Liam Oliver-Mallory <liam.olivermallory@gmail.com>"]
+build = "build.rs"
+
+[build-dependencies]
+cmake = "0.1.31"
+
+[dependencies]
+#sdl2 = {version = "0.31"}
+log = {version = "0.4.1"} #off,error,warn,info,debug,trace
+env_logger = "0.5.9"
+tiled = "0.7.4"
+
+[dependencies.sdl2]
+version = "0.31"
+default-features = false
+features = [
+    "image",
+    "unsafe_textures"]
