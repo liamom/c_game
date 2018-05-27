@@ -1,11 +1,7 @@
-use std::env;
-use std::io;
 use error::*;
 use util::*;
 use tiled;
-use std::fs::File;
 use std::path::Path;
-use log::*;
 use std::path::PathBuf;
 use sdl2::render::Texture;
 use sdl2::render::TextureCreator;
@@ -13,23 +9,19 @@ use sdl2::image::*;
 use sdl2::render::Canvas;
 use draw::Drawable;
 use sdl2::render::RenderTarget;
-use sdl2::rect::Rect;
 use std::rc::Rc;
+use util::math::TRect;
 
 struct Tile {
     id: u32,
     texture: Rc<Texture>,
-    source_rect: Rect,
+    source_rect: TRect,
 }
 
 impl Tile {
-    fn render<T: RenderTarget>(&self, c: &mut Canvas<T>, x: usize, y: usize) {
-//        Rect::new(x as i32, y as i32, self.source_rect[2] as u32, self.source_rect[3] as u32);
-        let mut dest_rect = self.source_rect.clone();
-        dest_rect.set_x(x as i32);
-        dest_rect.set_y(y as i32);
-
-        c.copy(&self.texture, self.source_rect, dest_rect).expect("Render failed");
+    fn render<T: RenderTarget>(&self, c: &mut Canvas<T>, dest_rect: TRect) {
+        let dr2 = dest_rect.to_rect();
+        c.copy(&self.texture, self.source_rect.to_rect(), dr2).expect("Render failed");
     }
 
     fn parse<W>(tc: &TextureCreator<W>, ts: &tiled::Tileset) -> Vec<Self> {
@@ -60,7 +52,7 @@ impl Tile {
             tiles.push(Tile{
                 id: id as u32,
                 texture: tex.clone(),
-                source_rect: Rect::new(x, y, ts.tile_width, ts.tile_height),
+                source_rect: TRect{x: x as f64, y: y as f64, w: t_w as f64, h: t_h as f64},
             });
 
             //width
@@ -90,22 +82,6 @@ impl Tile {
         }
 
         return tiles;
-    }
-
-    fn get_source_rect(local_id: u32, ts: &tiled::Tileset) -> [f64; 4] {
-        let (w,h) = (ts.tile_width, ts.tile_height);
-
-        let image = &ts.images[0];
-        let col_num = (image.width as u32) / w - 1;
-        let col = local_id % col_num;
-        let row = local_id / col_num;
-
-        let margin = ts.margin;
-        let w_spacing = ts.spacing * col + margin;
-        let h_spacing = ts.spacing * row + margin;
-
-        let (x,y) = (col * w + w_spacing, row * h + h_spacing);
-        return [ x as f64, y as f64, (x + w) as f64, (y + h) as f64];
     }
 }
 
@@ -146,37 +122,38 @@ impl Map {
         return Ok(map);
     }
 
-    fn draw_tile<T: RenderTarget>(&self, id: usize, x: usize, y: usize, mut c: &mut Canvas<T>) {
+    fn draw_tile<T: RenderTarget>(&self, id: usize, x: usize, y: usize, mut c: &mut Canvas<T>, trans: &math::Trans) {
         if id == 0 {
             return;
         }
 
-//        let tf = c.transform.trans(
-//            ((x as i32 - y as i32) * tile_set.tile_set.tile_width  as i32) as f64 / 2.0,
-//            ((x as i32 + y as i32) * tile_set.tile_set.tile_height as i32) as f64 / 2.0,
-//        );
-
         let tile = &self.tiles[id - 1];
         assert_eq!(id, tile.id as usize);
 
-        let (x,y) = (((x as i32 - y as i32) * tile.source_rect.width() as i32) as f64 / 2.0,
-                     ((x as i32 + y as i32) * tile.source_rect.height() as i32) as f64 / 2.0);
+        let mut dest_rect = tile.source_rect.clone();
 
+        let xf= ((x as i32 - y as i32) * dest_rect.w as i32) as f64 / 2.0;
+        let yf= ((x as i32 + y as i32) * dest_rect.h as i32) as f64 / 2.0;
 
-        tile.render(&mut c, x as usize, y as usize);
+        dest_rect.x = xf;
+        dest_rect.y = yf;
+
+        let t_rect = trans.apply(&dest_rect);
+
+        tile.render(&mut c, t_rect);
     }
 
 }
 
 impl Drawable for Map {
-    fn draw<T: RenderTarget>(&mut self, c: &mut Canvas<T>) {
-        c.copy(&mut self.texture, None, None);
+    fn draw<T: RenderTarget>(&mut self, c: &mut Canvas<T>, trans: &math::Trans) {
+        c.copy(&mut self.texture, None, None).unwrap();
 
         for layer in &self.map.layers {
             for x in 0..layer.tiles.len() {
                 for y in 0..layer.tiles[x].len() {
                     let tile = layer.tiles[y][x];
-                    self.draw_tile(tile as usize, x, y, c);
+                    self.draw_tile(tile as usize, x, y, c, trans);
                 }
             }
         }

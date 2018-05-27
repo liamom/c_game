@@ -1,7 +1,4 @@
-use sdl2::*;
-use sdl2::surface::*;
 use sdl2;
-use sdl2::video::*;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::rect::Rect;
 use sdl2::event::Event;

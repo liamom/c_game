@@ -1,8 +1,9 @@
 use sdl2::render::Canvas;
 use sdl2::render::RenderTarget;
+use math::Trans;
 
 pub trait Drawable {
-    fn draw<T: RenderTarget>(&mut self, tc: &mut Canvas<T>);
+    fn draw<T: RenderTarget>(&mut self, tc: &mut Canvas<T>, trans: &Trans);
 }
 
 pub const X0 :u8 = 0;

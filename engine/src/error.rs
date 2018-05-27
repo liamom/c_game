@@ -1,9 +1,8 @@
 use std::io;
 use std::error::Error;
-use std::any::TypeId;
 use std::fmt::Display;
 use std::fmt::Formatter;
-use std::fmt;
+use std::fmt::Result;
 use tiled;
 
 #[derive(Debug)]
@@ -20,8 +19,8 @@ impl GameError {
 }
 
 impl Display for GameError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result{
-        write!(f, "{}", self.what);
+    fn fmt(&self, f: &mut Formatter) -> Result{
+        write!(f, "{}", self.what).unwrap();
         Ok(())
     }
 }

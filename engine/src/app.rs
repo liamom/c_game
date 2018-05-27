@@ -1,13 +1,5 @@
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
-use std::time::Duration;
-use std::time::*;
-use std::ops::AddAssign;
-use sdl2::render::RenderTarget;
-use sdl2::render::Canvas;
-use std::thread::sleep;
-use std::time;
-use std::ops::Fn;
 
 pub trait AppHandler {
     fn update(&mut self) -> bool;
@@ -38,12 +30,12 @@ impl App {
         let mut next_game_tick = now();
 
         let mut loops;
-        let mut interpolation;
+        let mut _interpolation; // well use this later
 
         'outer_loop: loop {
             loops = 0;
-            while (now() > next_game_tick && loops < MAX_FRAMESKIP) {
-                if (!app.update()) {
+            while now() > next_game_tick && loops < MAX_FRAMESKIP {
+                if !app.update() {
                     break 'outer_loop;
                 }
 
@@ -51,7 +43,7 @@ impl App {
                 loops = loops + 1;
             }
 
-            interpolation = (now() + SKIP_TICKS - next_game_tick) / SKIP_TICKS;
+            _interpolation = (now() + SKIP_TICKS - next_game_tick) / SKIP_TICKS;
             app.render();
         }
     }

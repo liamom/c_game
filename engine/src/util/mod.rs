@@ -1,6 +1,6 @@
 use std::env;
-use std::path::Path;
 use std::path::PathBuf;
+pub mod math;
 
 pub fn get_asset(path: &str) -> PathBuf {
     let base = get_assets_path();

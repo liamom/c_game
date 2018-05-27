@@ -2,13 +2,11 @@ extern crate rand;
 #[macro_use] extern crate log;
 extern crate env_logger;
 extern crate engine;
-
 mod name_generator;
 mod gfx;
 mod my_app;
 
 use std::result::Result;
-use std::env;
 use name_generator::*;
 use engine::error::GameError;
 
