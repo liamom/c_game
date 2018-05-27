@@ -1,8 +1,8 @@
-extern crate piston_window;
-use piston_window::*;
+use sdl2::render::Canvas;
+use sdl2::render::RenderTarget;
 
 pub trait Drawable {
-    fn draw(&mut self, event: &Event, window: &mut PistonWindow );
+    fn draw<T: RenderTarget>(&mut self, tc: &mut Canvas<T>);
 }
 
 pub const X0 :u8 = 0;
