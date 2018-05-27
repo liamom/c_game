@@ -24,7 +24,7 @@ fn glob_folder<P: AsRef<Path>>(folder_path: &P, libs:&mut Vec<PathBuf>) {
     for file in files {
         let ref entry = file.unwrap();
         let path = entry.path().clone();
-        if path.is_file() && path.extension().unwrap() == "dll" ||  path.extension().unwrap() == "lib"{
+        if path.is_file() && path.extension().unwrap() == "dll" ||  path.extension().unwrap() == "libc"{
             libs.push(path.clone());
         }
     }
@@ -64,12 +64,12 @@ fn main() {
 
     if is_gnu && is_windows {
         //sdl2 image
-        let pp = external_dir + r#"SDL2_image\mingw_64"#;
+        let pp = external_dir + r#"SDL2\mingw_64"#;
         println!("cargo:rustc-link-search=native={}", &pp);
         glob_folder(&pp, &mut libs);
     } else if is_windows {
         //sdl2 image
-        let pp = external_dir + r#"SDL2_image\vc_64"#;
+        let pp = external_dir + r#"SDL2\vc_64"#;
         println!("cargo:rustc-link-search=native={}", &pp);
         glob_folder(&pp, &mut libs);
     }
