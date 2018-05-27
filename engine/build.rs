@@ -64,12 +64,12 @@ fn main() {
 
     if is_gnu && is_windows {
         //sdl2 image
-        let pp = external_dir + r#"SDL2\mingw_64"#;
+        let pp = external_dir + r#"mingw_64"#;
         println!("cargo:rustc-link-search=native={}", &pp);
         glob_folder(&pp, &mut libs);
     } else if is_windows {
         //sdl2 image
-        let pp = external_dir + r#"SDL2\vc_64"#;
+        let pp = external_dir + r#"vc_64"#;
         println!("cargo:rustc-link-search=native={}", &pp);
         glob_folder(&pp, &mut libs);
     }
