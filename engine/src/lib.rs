@@ -1,4 +1,5 @@
 pub extern crate sdl2;
+pub use sdl2::*;
 extern crate tiled;
 #[macro_use] extern crate log;
 

@@ -10,10 +10,6 @@ use std::result::Result;
 use name_generator::*;
 use engine::error::GameError;
 
-//extern crate sdl2;
-
-use engine::*;
-
 fn rec(i: i32)->i32 {
     match i {
         0 => {1}

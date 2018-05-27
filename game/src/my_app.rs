@@ -6,7 +6,7 @@ use engine::error::GameError;
 use engine::sdl2;
 use engine::sdl2::event::Event;
 use engine::util::math::Trans;
-use sdl2::keyboard::Keycode;
+use engine::sdl2::keyboard::Keycode;
 
 struct Objects {
     map: Map,
@@ -63,6 +63,15 @@ impl AppHandler for MyApp {
                 Event::KeyDown{ keycode: Some(Keycode::Right), .. } => {self.camera.trans_x(-SPEED);}
                 Event::KeyDown{ keycode: Some(Keycode::Z), .. } => {self.camera.scale(-SCALE_SPEED);}
                 Event::KeyDown{ keycode: Some(Keycode::X), .. } => {self.camera.scale(SCALE_SPEED);}
+                Event::MouseMotion {xrel, yrel, mousestate, ..} => {
+                    if mousestate.left() {
+                        self.camera.trans_x(xrel as f64);
+                        self.camera.trans_y(yrel as f64);
+                    }
+                }
+                Event::MouseWheel {y, ..} => {
+                    self.camera.scale(y as f64);
+                }
                 _ => {}
             }
         }
