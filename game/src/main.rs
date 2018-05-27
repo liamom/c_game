@@ -25,7 +25,7 @@ fn rec(i: i32)->i32 {
 
 fn main() {
     std::env::set_var("RUST_BACKTRACE", "1");
-    std::env::set_var("RUST_LOG", "game:engine");
+    std::env::set_var("RUST_LOG", "game,engine");
     env_logger::init();
     debug!("Logger initialized");
 

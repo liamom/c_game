@@ -14,143 +14,158 @@ use sdl2::render::Canvas;
 use draw::Drawable;
 use sdl2::render::RenderTarget;
 use sdl2::rect::Rect;
+use std::rc::Rc;
 
-struct TileSet {
-    texture: Texture,
-    tile_set: tiled::Tileset,
+struct Tile {
+    id: u32,
+    texture: Rc<Texture>,
+    source_rect: Rect,
 }
 
-impl TileSet {
-    fn new<W>(tc: &TextureCreator<W>, ts: &tiled::Tileset) -> Self {
+impl Tile {
+    fn render<T: RenderTarget>(&self, c: &mut Canvas<T>, x: usize, y: usize) {
+//        Rect::new(x as i32, y as i32, self.source_rect[2] as u32, self.source_rect[3] as u32);
+        let mut dest_rect = self.source_rect.clone();
+        dest_rect.set_x(x as i32);
+        dest_rect.set_y(y as i32);
+
+        c.copy(&self.texture, self.source_rect, dest_rect).expect("Render failed");
+    }
+
+    fn parse<W>(tc: &TextureCreator<W>, ts: &tiled::Tileset) -> Vec<Self> {
         let ref image = ts.images[0];
         let full_path: PathBuf =
             [&get_assets_path(), "assets", "tmx", &image.source].iter().collect();
 
         debug!("creating with tileset {:?}", full_path);
 
-        let tex = tc.load_texture(full_path).unwrap();
+        let tex = Rc::new(tc.load_texture(full_path).unwrap());
 
-//        let tex = Texture::from_path(
-//            &mut window.factory,
-//            full_path,
-//            Flip::None,
-//            &TextureSettings::new()).unwrap();
+        let mut tiles: Vec<Tile> = Vec::new();
 
+        let mut id = ts.first_gid as i32;
+        let mut i = 0;
+        let mut j = 0;
+        let image = &ts.images[0];
+        let i_w = image.width;
+        let i_h = image.height;
+        let mut x = ts.margin as i32;
+        let mut y = ts.margin as i32;
+        let t_w = ts.tile_width as i32;
+        let t_h = ts.tile_height as i32;
+        let spacing = ts.spacing as i32;
+        loop {
+            info!("id:{} i:{} j:{} x:{} y:{}", id, i, j, x, y);
+
+            tiles.push(Tile{
+                id: id as u32,
+                texture: tex.clone(),
+                source_rect: Rect::new(x, y, ts.tile_width, ts.tile_height),
+            });
+
+            //width
+            x += t_w + spacing;
+            if (x + t_w) > i_w {
+                //row ended
+                x = ts.margin as i32;
+                i = 0;
+
+                //adjust height
+                j += 1;
+                y += t_h + spacing;
+                //height
+                if (y + t_h) > i_h {
+                    break;
+                }
+            } else {
+                i += 1;
+            }
+
+            id = id + 1;
+        }
+
+        //i don't think there is ever anything in here
         for tile in &ts.tiles {
             info!("tile: {:?}", tile);
         }
 
-        TileSet {
-            texture: tex,
-            tile_set: ts.clone(),
-        }
+        return tiles;
     }
 
-    fn get_source_rect(&self, id: u32) -> [f64; 4] {
-        let (w,h) = (self.tile_set.tile_width, self.tile_set.tile_height);
+    fn get_source_rect(local_id: u32, ts: &tiled::Tileset) -> [f64; 4] {
+        let (w,h) = (ts.tile_width, ts.tile_height);
 
-        let image = &self.tile_set.images[0];
+        let image = &ts.images[0];
         let col_num = (image.width as u32) / w - 1;
-        let local_id = id - self.tile_set.first_gid;
         let col = local_id % col_num;
         let row = local_id / col_num;
 
-        let (x,y) = (col * w, row * h);
+        let margin = ts.margin;
+        let w_spacing = ts.spacing * col + margin;
+        let h_spacing = ts.spacing * row + margin;
+
+        let (x,y) = (col * w + w_spacing, row * h + h_spacing);
         return [ x as f64, y as f64, (x + w) as f64, (y + h) as f64];
     }
 }
 
-struct TilesetManager {
-    tile_sets: Vec<TileSet>,
-
-}
-
-impl TilesetManager {
-    fn get_by_id<'b>(&'b self, id: usize) -> &'b TileSet {
-        let set = self.tile_sets
-            .iter().rev().find(|t| id as u32 >= t.tile_set.first_gid);
-
-        if let Some(t) = set {
-            return t;
-        } else {
-            panic!("value {} not found", id)
-        }
-    }
-
-    fn draw<T: RenderTarget>(&self, id: usize, x: usize, y: usize, c: &mut Canvas<T>) {
-        if id == 0 {
-            return;
-        }
-
-        let tile_set = self.get_by_id(id);
-
-//        let tf = c.transform.trans(
-//            ((x as i32 - y as i32) * tile_set.tile_set.tile_width  as i32) as f64 / 2.0,
-//            ((x as i32 + y as i32) * tile_set.tile_set.tile_height as i32) as f64 / 2.0,
-//        );
-
-        let (x,y) = (((x as i32 - y as i32) * tile_set.tile_set.tile_width  as i32) as f64 / 2.0,
-                              ((x as i32 + y as i32) * tile_set.tile_set.tile_height as i32) as f64 / 2.0);
-
-        let source_rect1 = tile_set.get_source_rect(id as u32);
-        let source_rect = Rect::new(source_rect1[0] as i32, source_rect1[1] as i32,
-                                    source_rect1[2] as u32, source_rect1[3] as u32);
-        let dest_rect = Rect::new(x as i32, y as i32, tile_set.tile_set.tile_width, tile_set.tile_set.tile_height);
-
-        c.copy(&tile_set.texture, source_rect, dest_rect).expect("Render failed");
-//        c.copy(&tile_set.texture, None, None).expect("Render failed");
-    }
-}
-
 pub struct Map {
-//    map: TMXMap,
-//    image: Image,
     texture: Texture,
-//    texture_creator: TextureCreator<T>,
     map: tiled::Map,
-    manager: TilesetManager,
+    tiles: Vec<Tile>,
 }
 
 impl Map {
     pub fn new<T>(mut tc: &mut TextureCreator<T>) -> Result<Self, GameError> {
         let texture = tc.load_texture(get_asset("smiley.png")).unwrap();
 
-
-//        let path = get_asset("tmx/untitled.tmx");
-//        let img = get_asset("smiley.png");
-//
-//        let texture = Texture::from_path(
-//            &mut window.factory,
-//            img,
-//            Flip::None,
-//            &TextureSettings::new()).unwrap();
-
-//        let map_file = File::open(get_asset("tmx/untitled.tmx"))?;
         let path_str = get_asset("tmx/untitled.tmx");
         let path = Path::new(&path_str);
         let map = tiled::parse_file(path)?;
 
-//        let reef = tc;
-
         //tile sets
-        let mut tile_sets: Vec<TileSet> = Vec::new();
+        let mut tiles: Vec<Tile> = Vec::new();
         for tile_set in &map.tilesets {
-            let temp: TileSet = TileSet::new(&mut tc, &tile_set);
-            tile_sets.push(temp);
+            let temp = Tile::parse(&mut tc, &tile_set);
+            tiles.extend(temp);
+        }
+
+        //verify the tile ids
+        for i in 0..tiles.len() {
+            if i+1 != tiles[i].id as usize {
+                return Err(GameError::new("Error id conflict"));
+            }
         }
 
         let map = Map {
-//            image: Image::new(),
             texture,
-//            texture_creator: tc,
             map,
-            manager: TilesetManager {
-                tile_sets: tile_sets,
-            },
+            tiles,
         };
 
         return Ok(map);
     }
+
+    fn draw_tile<T: RenderTarget>(&self, id: usize, x: usize, y: usize, mut c: &mut Canvas<T>) {
+        if id == 0 {
+            return;
+        }
+
+//        let tf = c.transform.trans(
+//            ((x as i32 - y as i32) * tile_set.tile_set.tile_width  as i32) as f64 / 2.0,
+//            ((x as i32 + y as i32) * tile_set.tile_set.tile_height as i32) as f64 / 2.0,
+//        );
+
+        let tile = &self.tiles[id - 1];
+        assert_eq!(id, tile.id as usize);
+
+        let (x,y) = (((x as i32 - y as i32) * tile.source_rect.width() as i32) as f64 / 2.0,
+                     ((x as i32 + y as i32) * tile.source_rect.height() as i32) as f64 / 2.0);
+
+
+        tile.render(&mut c, x as usize, y as usize);
+    }
+
 }
 
 impl Drawable for Map {
@@ -161,7 +176,7 @@ impl Drawable for Map {
             for x in 0..layer.tiles.len() {
                 for y in 0..layer.tiles[x].len() {
                     let tile = layer.tiles[y][x];
-                    self.manager.draw(tile as usize, x, y, c);
+                    self.draw_tile(tile as usize, x, y, c);
                 }
             }
         }
