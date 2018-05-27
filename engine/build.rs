@@ -24,7 +24,7 @@ fn glob_folder<P: AsRef<Path>>(folder_path: &P, libs:&mut Vec<PathBuf>) {
     for file in files {
         let ref entry = file.unwrap();
         let path = entry.path().clone();
-        if path.is_file() && path.extension().unwrap() == "dll" ||  path.extension().unwrap() == "libc"{
+        if path.is_file() && path.extension().unwrap() == "dll" ||  path.extension().unwrap() == "lib"{
             libs.push(path.clone());
         }
     }
